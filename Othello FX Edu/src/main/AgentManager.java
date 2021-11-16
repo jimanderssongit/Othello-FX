@@ -8,8 +8,8 @@ import com.eudycontreras.othello.models.GameBoardCell;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
+
 /**
- * Hanna-My
  * <H2>Created by</h2> Eudy Contreras
  * <h4> Mozilla Public License 2.0 </h4>
  * Licensed under the Mozilla Public License 2.0 (the "License");
