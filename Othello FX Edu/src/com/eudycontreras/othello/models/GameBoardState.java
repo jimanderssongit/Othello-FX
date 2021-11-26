@@ -30,7 +30,13 @@ public class GameBoardState {
 	
 	private boolean visited = false;
 	
-	private boolean isRoot = false; 
+	private boolean isRoot = false;
+
+	private double alpha = 0;
+
+	private double beta = 0;
+
+	private double value = 0;
 
 	private BoardCellState playerTurn;
 	
@@ -68,6 +74,7 @@ public class GameBoardState {
 
 		return state;
 	}
+
 	
 	public void setWhiteCount(int whiteCounter) {
 		this.whiteCount = whiteCounter;
@@ -303,5 +310,29 @@ public class GameBoardState {
 				return Long.compare(arg1.getStaticScore(state), arg0.getStaticScore(state));
 			}	
 		};
+	}
+
+	public double getAlpha() {
+		return alpha;
+	}
+
+	public void setAlpha(double alpha) {
+		this.alpha = alpha;
+	}
+
+	public double getBeta() {
+		return beta;
+	}
+
+	public void setBeta(double beta) {
+		this.beta = beta;
+	}
+
+	public double getValue() {
+		return value;
+	}
+
+	public void setValue(double value) {
+		this.value = value;
 	}
 }

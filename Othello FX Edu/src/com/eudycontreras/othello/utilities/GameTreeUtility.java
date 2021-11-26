@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.eudycontreras.othello.capsules.Index;
 import com.eudycontreras.othello.capsules.ObjectiveWrapper;
+import com.eudycontreras.othello.controllers.AgentController;
 import com.eudycontreras.othello.enumerations.BoardCellState;
 import com.eudycontreras.othello.enumerations.PlayerTurn;
 import com.eudycontreras.othello.models.GameBoardCell;
@@ -132,6 +133,20 @@ public class GameTreeUtility {
 		executorManager.execute();
 
 	}
+
+	public static ObjectiveWrapper alphaBetaPruning(GameBoardState currentState, int treeBuildDepth, int treeBuildTime) {
+		double alpha = Double.MIN_VALUE;
+		double beta = Double.MAX_VALUE;
+		long startTime = System.currentTimeMillis();
+		double v = maxValue(currentState, currentState, treeBuildDepth, startTime, treeBuildTime, alpha, beta);
+		System.out.println("Det här är värdet: " + v);
+		for (int i = 0; i < currentState.getChildStates().size(); i++) {
+			if (currentState.getChildStates().get(i).getValue() == v)
+				return currentState.getChildStates().get(i).getLeadingMove();
+		}
+		System.out.println("Nåt gick fel lol");
+		return currentState.getChildStates().get(0).getLeadingMove();
+	}
 	
 	public static GameBoardState buildDecissionTree(GameBoardState currentState, int treeBuildDepth, int treeBuildTime){
 		
@@ -140,7 +155,8 @@ public class GameTreeUtility {
 	
 	
 	private static GameBoardState buildInitialBranches(GameBoardState root, GameBoardState currentState, GameBoardCell node, int buildDepth, long startTime, int treeBuildTime){
-	
+		double alpha = Double.MIN_VALUE;
+		double beta = Double.MAX_VALUE;
 		moveCounter ++;
 		
 		List<ObjectiveWrapper> possibleMoves = TraversalUtility.getAvailableCells(node, TRAVERSAL_DEPTH);
@@ -151,7 +167,8 @@ public class GameTreeUtility {
 				
 				GameBoardState childState = createChildState(root, currentState, move);
 
-				buildDecissionTree(root, childState, buildDepth-1, startTime, treeBuildTime);
+				//buildDecissionTree(root, childState, buildDepth-1, startTime, treeBuildTime);
+				maxValue(root, childState, buildDepth-1, startTime, treeBuildTime, alpha, beta);
 				
 				currentState.addChildState(childState);
 			}	
@@ -198,6 +215,114 @@ public class GameTreeUtility {
 			}
 		}	
 		return root;
+	}
+
+	private static double maxValue(GameBoardState root, GameBoardState currentState, int buildDepth, long startTime, int treeBuildTime, double alpha, double beta){
+		double value = Double.MIN_VALUE;
+		increaseCounters();
+
+		if(timeLimitExceeded(startTime, treeBuildTime) || buildDepth < 0|| currentState.isTerminal()){
+			double heuristicValue = AgentController.getDynamicHeuristic(currentState);
+			System.out.println("MAX heuristicValue: " + heuristicValue + "build depth: " + buildDepth );
+			return heuristicValue;
+		}
+
+		for(int row = 0; row<currentState.getCells().length; row++){
+			for(int col = 0; col<currentState.getCells()[row].length; col++){
+
+				GameBoardCell node = currentState.getCells()[row][col];
+
+				if(!qualifiedCell(node)){
+					continue;
+				}
+
+				if(node.getCellState() != currentState.getPlayerTurn()){
+					continue;
+				}
+
+				List<ObjectiveWrapper> possibleMoves = TraversalUtility.getAvailableCells(node, TRAVERSAL_DEPTH);
+
+				if(!possibleMoves.isEmpty()){
+
+					for (ObjectiveWrapper move : possibleMoves) {
+
+						GameBoardState childState = createChildState(root, currentState, move);
+
+						double minValue = minValue(root, childState, buildDepth-1, startTime, treeBuildTime, alpha, beta);
+						System.out.println("MAX MinValue: " + minValue);
+						value = Math.max(Math.max(value, minValue), Math.max(alpha, beta));
+						System.out.println("MAX Value: " + value);
+						childState.setValue(value);
+						currentState.addChildStates(childState);
+						/*if(value>= beta){
+							return value;
+						}
+						alpha = Math.max(alpha, value);*/
+					}
+
+
+				}
+			}
+		}
+		if(value>= beta){
+			return value;
+		}
+		alpha = Math.max(alpha, value);
+
+		return value;
+	}
+	private static double minValue(GameBoardState root, GameBoardState currentState, int buildDepth, long startTime, int treeBuildTime, double alpha, double beta){
+		double value = Double.MAX_VALUE;
+		increaseCounters();
+
+		if(timeLimitExceeded(startTime, treeBuildTime) || buildDepth < 0|| currentState.isTerminal()){
+			double heuristicValue =   AgentController.getDynamicHeuristic(currentState);
+			System.out.println("MIN heuristicValue: " + heuristicValue + "build depth: " + buildDepth );
+			return heuristicValue;
+		}
+
+		for(int row = 0; row<currentState.getCells().length; row++){
+			for(int col = 0; col<currentState.getCells()[row].length; col++){
+
+				GameBoardCell node = currentState.getCells()[row][col];
+
+				if(!qualifiedCell(node)){
+					continue;
+				}
+
+				if(node.getCellState() != currentState.getPlayerTurn()){
+					continue;
+				}
+
+				List<ObjectiveWrapper> possibleMoves = TraversalUtility.getAvailableCells(node, TRAVERSAL_DEPTH);
+
+				if(!possibleMoves.isEmpty()){
+
+					for (ObjectiveWrapper move : possibleMoves) {
+
+						GameBoardState childState = createChildState(root, currentState, move);
+
+						double maxValue = maxValue(root, childState, buildDepth-1, startTime, treeBuildTime, alpha, beta);
+						System.out.println("MIN maxValue: " + maxValue);
+						value = Math.min(Math.min(value, maxValue), Math.min(alpha, beta));
+						System.out.println("MIN Value: " + value);
+						childState.setValue(value);
+						currentState.addChildStates(childState);
+/*						if(value<= alpha){
+							return value;
+						}
+						beta = Math.min(beta, value);*/
+					}
+
+
+				}
+			}
+		}
+		if(value<= alpha){
+			return value;
+		}
+		beta = Math.min(beta, value);
+		return value;
 	}
 
 	private static void increaseCounters() {

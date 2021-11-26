@@ -226,6 +226,17 @@ public class AgentController {
 	 * @param turn : The current turn give the state
 	 * @return : The move that yields the best score
 	 */
+
+	public static MoveWrapper findUltimateMove(GameBoardState currentState, PlayerTurn turn) {
+		final int treeBuildDepth = 6; // <--- Choose build depth
+		final int treeBuildTime = 5000;
+		ObjectiveWrapper ultimateMove = GameTreeUtility.alphaBetaPruning(currentState, treeBuildDepth, treeBuildTime);
+
+		return new MoveWrapper(ultimateMove);
+	}
+
+
+
 	public static MoveWrapper findBestMove(GameBoardState currentState, PlayerTurn turn){
 		
 		//Best move chosen from a list of moves
