@@ -228,7 +228,7 @@ public class AgentController {
 	 */
 
 	public static MoveWrapper findUltimateMove(GameBoardState currentState, PlayerTurn turn) {
-		final int treeBuildDepth = 6; // <--- Choose build depth
+		final int treeBuildDepth = 10; // <--- Choose build depth
 		final int treeBuildTime = 5000;
 		ObjectiveWrapper ultimateMove = GameTreeUtility.alphaBetaPruning(currentState, treeBuildDepth, treeBuildTime);
 
