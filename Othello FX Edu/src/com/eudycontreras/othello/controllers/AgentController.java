@@ -56,6 +56,9 @@ public class AgentController {
 	public static final int NEIGHBOR_OFFSET_X[] = {-1, -1, 0, 1, 1, 1, 0, -1};
 	public static final int NEIGHBOR_OFFSET_Y[] = {0, 1, 1, 1, 0, -1, -1, -1};
 
+	public  static int nbrOfNodes= 0;
+	public static int searchDepth=60;
+
 	private static final int[][] WEIGHT_MATRIX_8X8 = { 
 			{ A, G, B, C, C, B, G, A},
 			{ G, H, F, F, F, F, H, G},
@@ -171,7 +174,6 @@ public class AgentController {
 		ThreadManager.execute(()->{
 			
 			AgentMove move = agent.getMove(root);
-			
 			othello.getGameController().passInformation(
 					agent.getSearchDepth(),
 					agent.getReachedLeafNodes(), 
@@ -227,12 +229,26 @@ public class AgentController {
 	 * @return : The move that yields the best score
 	 */
 
-	public static MoveWrapper findUltimateMove(GameBoardState currentState, PlayerTurn turn) {
+	public static MoveWrapper findUltimateMove(Agent agent, GameBoardState currentState, PlayerTurn turn) {
+		nbrOfNodes=0;
+
 		final int treeBuildDepth = 10; // <--- Choose build depth
 		final int treeBuildTime = 5000;
-		ObjectiveWrapper ultimateMove = GameTreeUtility.alphaBetaPruning(currentState, treeBuildDepth, treeBuildTime);
 
+		searchDepth = treeBuildDepth-1;
+		ObjectiveWrapper ultimateMove = GameTreeUtility.alphaBetaPruning(currentState, treeBuildDepth, treeBuildTime);
+		int depth = treeBuildDepth-1-searchDepth;
+		agent.setNodesExamined(nbrOfNodes);
+		agent.setSearchDepth(depth);
 		return new MoveWrapper(ultimateMove);
+	}
+
+	public static void nodeCounter(){
+		nbrOfNodes++;
+	}
+
+	public static void depthTracker(int depth){
+		if(depth<searchDepth) searchDepth = depth;
 	}
 
 

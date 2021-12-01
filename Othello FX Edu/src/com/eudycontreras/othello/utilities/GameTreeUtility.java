@@ -138,13 +138,11 @@ public class GameTreeUtility {
         double beta = Double.MAX_VALUE;
         long startTime = System.currentTimeMillis();
         double v = maxValue(currentState, currentState, treeBuildDepth, startTime, treeBuildTime, alpha, beta);
-        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2Det här är värdet: " + v);
         for (int i = 0; i < currentState.getChildStates().size(); i++) {
             if (currentState.getChildStates().get(i).getValue() == v)
                 return currentState.getChildStates().get(i).getLeadingMove();
         }
-        System.out.println("Nåt gick fel lol");
-        return currentState.getChildStates().get(0).getLeadingMove();
+        return null;
     }
 
     public static GameBoardState buildDecissionTree(GameBoardState currentState, int treeBuildDepth, int treeBuildTime) {
@@ -166,8 +164,6 @@ public class GameTreeUtility {
 
                 GameBoardState childState = createChildState(root, currentState, move);
 
-                //buildDecissionTree(root, childState, buildDepth-1, startTime, treeBuildTime);
-                maxValue(root, childState, buildDepth - 1, startTime, treeBuildTime, alpha, beta);
 
                 currentState.addChildState(childState);
             }
@@ -217,14 +213,17 @@ public class GameTreeUtility {
     }
 
     private static double maxValue(GameBoardState root, GameBoardState currentState, int buildDepth, long startTime, int treeBuildTime, double alpha, double beta) {
-        double value = -Double.MAX_VALUE;
+
+		AgentController.depthTracker(buildDepth);
+		AgentController.nodeCounter();
+
+		double value = -Double.MAX_VALUE;
         increaseCounters();
 
         if (timeLimitExceeded(startTime, treeBuildTime) || buildDepth < 0 || currentState.isTerminal()) {
             double heuristicValue = AgentController.getDynamicHeuristic(currentState);
-            //System.out.println("MAX heuristicValue: " + heuristicValue + "build depth: " + buildDepth);
-            value = heuristicValue;
-        } else {
+            return heuristicValue;
+        }
 
             for (int row = 0; row < currentState.getCells().length; row++) {
                 for (int col = 0; col < currentState.getCells()[row].length; col++) {
@@ -244,41 +243,42 @@ public class GameTreeUtility {
                     if (!possibleMoves.isEmpty()) {
 
                         for (ObjectiveWrapper move : possibleMoves) {
-
                             GameBoardState childState = createChildState(root, currentState, move);
 
                             double minValue = minValue(root, childState, buildDepth - 1, startTime, treeBuildTime, alpha, beta);
-                            //System.out.println("MAX MinValue: " + minValue);
                             value = Math.max(value, minValue);
-                           // System.out.println("MAX Value: " + value);
+
                             childState.setValue(value);
                             currentState.addChildStates(childState);
-                            //System.out.println("=============beta:" + beta);
                             if (value >= beta) {
                                 return value;
                             }
-                            //System.out.println("Set alpha from: " + alpha);
                             alpha = Math.max(alpha, value);
-                            //System.out.println("to: " + alpha);
                         }
 
 
                     }
                 }
             }
-        }
 
 
+
+            if(value==-Double.MAX_VALUE){
+            	value = AgentController.getDynamicHeuristic(currentState);
+			}
         return value;
     }
 
     private static double minValue(GameBoardState root, GameBoardState currentState, int buildDepth, long startTime, int treeBuildTime, double alpha, double beta) {
+    	AgentController.depthTracker(buildDepth);
+		AgentController.nodeCounter();
+
         double value = Double.MAX_VALUE;
+        //nbrNodes++;
         increaseCounters();
 
         if (timeLimitExceeded(startTime, treeBuildTime) || buildDepth < 0 || currentState.isTerminal()) {
             double heuristicValue = AgentController.getDynamicHeuristic(currentState);
-            //System.out.println("MIN heuristicValue: " + heuristicValue + "build depth: " + buildDepth);
             return heuristicValue;
         }
 
@@ -296,33 +296,34 @@ public class GameTreeUtility {
                 }
 
                 List<ObjectiveWrapper> possibleMoves = TraversalUtility.getAvailableCells(node, TRAVERSAL_DEPTH);
-
                 if (!possibleMoves.isEmpty()) {
-
                     for (ObjectiveWrapper move : possibleMoves) {
 
                         GameBoardState childState = createChildState(root, currentState, move);
 
                         double maxValue = maxValue(root, childState, buildDepth - 1, startTime, treeBuildTime, alpha, beta);
-                        //System.out.println("MIN maxValue: " + maxValue);
+
                         value = Math.min(value, maxValue);
-                        //System.out.println("MIN Value: " + value);
+
                         childState.setValue(value);
                         currentState.addChildStates(childState);
 
-                        //System.out.println("=========== alpha: " + alpha);
+
                         if (value <= alpha) {
                             return value;
                         }
-                        //System.out.println("beta before: " + beta);
+
                         beta = Math.min(beta, value);
-                        //System.out.println("beta after: " + beta);
+
                     }
 
 
                 }
             }
         }
+		if(value==Double.MAX_VALUE){
+			value = AgentController.getDynamicHeuristic(currentState);
+		}
 
         return value;
     }
@@ -396,9 +397,6 @@ public class GameTreeUtility {
 
         state.getGameBoard().resetBuildTrails(BoardCellState.ANY);
 
-//		System.out.println("Current State: " + currentState.getPlayerTurn());
-//		
-//		printBoard(cells);
 
         return state;
     }

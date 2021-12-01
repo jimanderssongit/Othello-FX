@@ -21,6 +21,6 @@ public class AlphaBetaAgent extends Agent {
 
     @Override
     public AgentMove getMove(GameBoardState gameState) {
-        return AgentController.findUltimateMove(gameState, playerTurn);
+        return AgentController.findUltimateMove(this,gameState, playerTurn);
     }
 }
